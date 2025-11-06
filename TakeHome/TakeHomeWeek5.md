@@ -161,11 +161,55 @@ def gameplay_analysis(activity: pd.DataFrame) -> pd.DataFrame:
 https://leetcode.com/problems/project-employees-i/
 ```sql
 
+SELECT p.project_id,
+       ROUND(AVG(e.experience_years), 2) AS average_years
+FROM Project p
+JOIN Employee e
+  ON p.employee_id = e.employee_id
+GROUP BY p.project_id;
 ```
 
 ```pandas
 
+import pandas as pd
 
+def project_employees_i(project: pd.DataFrame, employee: pd.DataFrame) -> pd.DataFrame:
+    merged = project.merge(employee[['employee_id','experience_years']], on='employee_id')
+    return merged.groupby('project_id', as_index=False)['experience_years'] \
+                 .mean().round({'experience_years': 2}) \
+                 .rename(columns={'experience_years':'average_years'})
 ```
 
 https://leetcode.com/problems/department-top-three-salaries/
+```sql
+#was not able to solve without help :(
+
+SELECT d.name AS Department,
+       e.name AS Employee,
+       e.salary AS Salary
+FROM Employee e
+JOIN Department d
+  ON e.departmentId = d.id
+WHERE e.salary IN (
+    SELECT DISTINCT salary
+    FROM Employee
+    WHERE departmentId = e.departmentId
+    ORDER BY salary DESC
+    LIMIT 3
+)
+ORDER BY d.name, e.salary DESC;
+```
+
+```pandas
+
+import pandas as pd
+
+def top_three_salaries(employee: pd.DataFrame, department: pd.DataFrame) -> pd.DataFrame:
+    merged = employee.merge(department, left_on='departmentId', right_on='id')
+    merged['rank'] = merged.groupby('departmentId')['salary'] \
+                           .rank(method='dense', ascending=False)
+    top3 = merged[merged['rank'] <= 3]
+    return top3[['name_y', 'name_x', 'salary']] \
+             .rename(columns={'name_y':'Department', 'name_x':'Employee'})
+
+```
